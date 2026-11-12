@@ -1,0 +1,60 @@
+{
+  "name": "wiro-next-starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Next.js starter for Wiro AI: text to image, text to video with live progress, and a streaming chat on the Wiro LLM gateway with the AI SDK.",
+  "license": "MIT",
+  "author": "Wiro AI",
+  "homepage": "https://github.com/wiroai/Wiro-Next-Starter#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wiroai/Wiro-Next-Starter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/wiroai/Wiro-Next-Starter/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "@ai-sdk/react": "^4.0.174",
+    "@wiro-ai/wiro-llm": "^0.1.3",
+    "ai": "^7.0.170",
+    "next": "16.4.6",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "server-only": "^0.0.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/turbopack": "4.3.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.6",
+    "prettier": "^3.10.0",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "4.3.3",
+    "typescript": "^5",
+    "vitest": "^5.1.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.8"
+    }
+  }
+}

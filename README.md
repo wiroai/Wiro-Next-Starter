@@ -1,8 +1,8 @@
+# Wiro AI Next.js Starter
+
 <div align="center">
 
 <img src="https://raw.githubusercontent.com/wiroai/Wiro-Next-Starter/main/.github/assets/wiro-logo.png" alt="Wiro AI" width="240">
-
-# Wiro AI Next.js Starter
 
 A Next.js app for the Wiro AI API: a Playground for any of the 1,000+ models, image, video and audio tools, a streaming LLM chat built with the Vercel AI SDK, and a history of your runs.
 

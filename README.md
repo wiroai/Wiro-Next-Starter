@@ -12,7 +12,7 @@ A Next.js app for the Wiro AI API: a Playground for any of the 1,000+ models, im
 
 <img src="https://wiro.ai/images/koala/accent-heavy-koala.png" alt="Wiro AI koala mascot" width="60" />
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwiroai%2FWiro-Next-Starter&env=WIRO_API_KEY&envDescription=API%20key%20of%20your%20Wiro%20AI%20project&envLink=https%3A%2F%2Fwiro.ai%2Fdocs%2Fauthentication&project-name=wiro-next-starter&repository-name=wiro-next-starter) [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/d9X1ON?referralCode=oJDnIx&utm_medium=integration&utm_source=button&utm_campaign=wiro-next-starter)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwiroai%2FWiro-Next-Starter&env=WIRO_API_KEY&envDescription=API%20key%20of%20your%20Wiro%20AI%20project&envLink=https%3A%2F%2Fwiro.ai%2Fdocs%2Fauthentication&project-name=wiro-next-starter&repository-name=wiro-next-starter&demo-title=Wiro%20AI%20Next.js%20Starter&demo-description=Run%20any%20of%20the%201%2C000%2B%20Wiro%20AI%20models%20from%20a%20Next.js%20app%3A%20Playground%2C%20image%2C%20video%20and%20audio%20tools%2C%20LLM%20chat%20and%20history%2C%20with%20prices%20shown.&demo-url=https%3A%2F%2Fwiro-next-starter.vercel.app&demo-image=https%3A%2F%2Fraw.githubusercontent.com%2Fwiroai%2FWiro-Next-Starter%2Fmain%2Fapp%2Fopengraph-image.png) [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/d9X1ON?referralCode=oJDnIx&utm_medium=integration&utm_source=button&utm_campaign=wiro-next-starter)
 
 </div>
 

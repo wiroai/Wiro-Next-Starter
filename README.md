@@ -31,6 +31,7 @@ This starter shows how to build on [Wiro AI](https://wiro.ai) with the Next.js A
 - **One result into the next tool.** An image goes on to Edit, Upscale, Remove background or Animate in one click, and a speech file to Transcribe.
 - **The price before each run,** worked out from the model's price list the way Wiro AI bills it, and the billed amount after.
 - **Ready to deploy.** Calls only from route handlers, every request checked against the model's inputs, an optional password for the whole app and an optional price limit per run.
+- **An agent skill** for coding agents, with tested samples for keys, prices, tasks, webhooks and chat. See [Agent skill](#agent-skill).
 - Next.js 16 with the App Router and Cache Components, React 19, TypeScript, Tailwind CSS 4, AI SDK 7, light and dark themes, ESLint, Prettier and Vitest.
 
 ## Deploy
@@ -154,6 +155,16 @@ A task is finished when its status is `task_postprocess_end`, with `pexit` `"0"`
 - **Hide more models:** extend `isHiddenModel` in `lib/catalog/filters.ts`.
 - **Change the look:** the colors are CSS variables at the top of `app/globals.css`, with a dark set for `prefers-color-scheme: dark`.
 
+## Agent skill
+
+The repository ships an agent skill, [`wiro-nextjs`](skills/wiro-nextjs/SKILL.md), that teaches coding agents such as Claude Code, Cursor and Codex to build on Wiro AI in a Next.js app: the API key in route handlers and server actions, models and their prices from the catalog, tasks followed by polling or a webhook, file uploads, image, video and speech runs, and chat through the LLM gateway. It also maps the files of this starter. Install it in your project with:
+
+```bash
+npx skills add wiroai/Wiro-Next-Starter --skill wiro-nextjs
+```
+
+Every code sample in the skill is also a file in `skills/wiro-nextjs/examples`, which `npm run typecheck` checks against the code of this repository, and `tests/skill.test.ts` keeps the two copies the same.
+
 ## Screenshots
 
 ![The Playground: models of a category with their prices](.github/assets/screenshot-playground.png)
@@ -177,7 +188,7 @@ npm run build      # production build
 npm start          # serve the production build
 ```
 
-The tests cover the input handling and pricing, the catalog, the Run API client with request signing, task status mapping, every route handler and the password check. They use a mocked `fetch` and make no network calls. CI runs them with the format check, lint, type check and build on Node.js 22 and 24.
+The tests cover the input handling and pricing, the catalog, the Run API client with request signing, task status mapping, every route handler, the password check and the code samples of the agent skill. They use a mocked `fetch` and make no network calls. CI runs them with the format check, lint, type check and build on Node.js 22 and 24.
 
 ## Costs
 

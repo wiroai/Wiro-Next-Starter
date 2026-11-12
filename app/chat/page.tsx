@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function ChatPage() {
   return (
-    <main className="flex h-[calc(100dvh-3.5rem)] flex-col">
+    <main className="flex h-[calc(100dvh-var(--header-height))] flex-col">
       <Chat />
     </main>
   );

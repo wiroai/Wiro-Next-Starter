@@ -1,8 +1,23 @@
 import { formatElapsed, PROGRESS_STAGES, type Stage } from '@/lib/tasks';
 import { cx } from './ui';
 
+function roughDuration(seconds: number): string {
+  if (seconds < 60) return `${Math.max(1, Math.round(seconds))} seconds`;
+  const minutes = Math.round(seconds / 60);
+  return minutes === 1 ? 'a minute' : `${minutes} minutes`;
+}
+
 /** The stages of a running task, with the current one highlighted. */
-export function TaskProgress({ stage, elapsedMs }: { stage: Stage | null; elapsedMs: number }) {
+export function TaskProgress({
+  stage,
+  elapsedMs,
+  expectedSeconds,
+}: {
+  stage: Stage | null;
+  elapsedMs: number;
+  /** How long runs of this model usually take. */
+  expectedSeconds?: number;
+}) {
   const current = Math.max(
     0,
     PROGRESS_STAGES.findIndex((step) => step.stage === (stage ?? 'queued')),
@@ -44,6 +59,9 @@ export function TaskProgress({ stage, elapsedMs }: { stage: Stage | null; elapse
           );
         })}
       </ol>
+      {expectedSeconds ? (
+        <p className="text-xs text-muted">Runs of this model usually take about {roughDuration(expectedSeconds)}.</p>
+      ) : null}
     </div>
   );
 }

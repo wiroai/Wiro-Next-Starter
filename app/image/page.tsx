@@ -1,22 +1,16 @@
 import type { Metadata } from 'next';
-import { MediaStudio } from '@/components/media-studio';
-import { PageIntro, SiteFooter } from '@/components/site';
+import { ToolPage } from '@/components/tool-page';
 
 export const metadata: Metadata = {
-  title: 'Text to image',
-  description: 'Generate images with P-Image, GPT Image 2, Nano Banana 2 and Seedream 4.5 on Wiro AI.',
+  title: 'Image',
+  description: 'Generate images, edit them with a prompt, upscale them and remove backgrounds with Wiro AI models.',
 };
 
 export default function ImagePage() {
   return (
-    <>
-      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10 sm:px-6">
-        <PageIntro title="Text to image">
-          Write a prompt, pick a model and a shape. The image arrives in a few seconds.
-        </PageIntro>
-        <MediaStudio kind="image" />
-      </main>
-      <SiteFooter />
-    </>
+    <ToolPage page="image" title="Image">
+      Generate an image, edit one by describing the change, upscale it or cut out the background. Every tool lists the
+      models of its category in the Wiro AI catalog.
+    </ToolPage>
   );
 }

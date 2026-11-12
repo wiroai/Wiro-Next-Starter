@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
-import type { Choice } from '@/lib/models';
+import type { Choice } from '@/lib/catalog/types';
 
 export function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(' ');
@@ -123,5 +123,36 @@ export function ExternalIcon({ className }: { className?: string }) {
         strokeLinejoin="round"
       />
     </svg>
+  );
+}
+
+export function Badge({ children, className }: { children: ReactNode; className?: string }) {
+  return (
+    <span
+      className={cx(
+        'inline-flex items-center rounded-full border border-border px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-muted',
+        className,
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+/** A model name the way wiro.ai shows it: the owner/model slug first, the title small below. */
+export function ModelName({ id, title, className }: { id: string; title?: string; className?: string }) {
+  return (
+    <span className={cx('flex min-w-0 flex-col', className)}>
+      <span className="truncate font-mono text-[13px] font-medium text-foreground">{id}</span>
+      {title && title !== id ? <span className="truncate text-xs text-muted">{title}</span> : null}
+    </span>
+  );
+}
+
+export function ErrorNote({ children }: { children: ReactNode }) {
+  return (
+    <p role="alert" className="rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-sm text-danger">
+      {children}
+    </p>
   );
 }

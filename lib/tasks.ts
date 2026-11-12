@@ -33,13 +33,16 @@ const STAGE_BY_STATUS: Record<string, Stage> = {
 export type WiroTask = {
   status?: string;
   pexit?: string;
+  debugoutput?: string;
   debugerror?: string;
   elapsedseconds?: string;
   totalcost?: string;
-  outputs?: { name?: string; contenttype?: string; url?: string }[];
+  outputs?: { name?: string; contenttype?: string; url?: string; content?: unknown }[];
 };
 
-export type TaskOutput = { url: string; contentType: string; name: string };
+export type OutputKind = 'image' | 'video' | 'audio' | 'text' | 'file';
+
+export type TaskOutput = { url: string; contentType: string; name: string; kind: OutputKind };
 
 /** What the browser gets back when it polls a task. */
 export type TaskView = {
@@ -47,11 +50,25 @@ export type TaskView = {
   stage: Stage;
   done: boolean;
   outputs: TaskOutput[];
+  /** Text answer: an LLM reply, a transcript, a caption. */
+  text: string | null;
   /** Billed amount in USD, once the task is done. */
   cost: number | null;
   seconds: number | null;
   error: string | null;
 };
+
+const MAX_TEXT = 50_000;
+
+export function outputKind(contentType: string, name: string): OutputKind {
+  const type = contentType.toLowerCase();
+  const file = name.toLowerCase();
+  if (type.startsWith('image/') || /\.(png|jpe?g|webp|gif|avif|bmp)$/.test(file)) return 'image';
+  if (type.startsWith('video/') || /\.(mp4|webm|mov|m4v)$/.test(file)) return 'video';
+  if (type.startsWith('audio/') || /\.(mp3|wav|ogg|m4a|flac|aac)$/.test(file)) return 'audio';
+  if (type.startsWith('text/') || /\.(txt|srt|vtt|md|json)$/.test(file)) return 'text';
+  return 'file';
+}
 
 function toNumber(value: string | undefined): number | null {
   if (value === undefined || value === '') return null;
@@ -65,23 +82,53 @@ function shortError(text: string | undefined): string | null {
   return message.length > 300 ? `${message.slice(0, 297)}...` : message;
 }
 
+/** The text answer: structured LLM content first, then debugoutput when the task made no files. */
+function textOf(task: WiroTask, files: number): string | null {
+  for (const output of task.outputs ?? []) {
+    if (String(output.contenttype).toLowerCase() !== 'raw') continue;
+    const content = output.content;
+    if (typeof content === 'string' && content.trim()) return content.trim().slice(0, MAX_TEXT);
+    if (content && typeof content === 'object') {
+      const record = content as { raw?: unknown; segments?: { type?: string; text?: string }[] };
+      if (typeof record.raw === 'string' && record.raw.trim()) return record.raw.trim().slice(0, MAX_TEXT);
+      const answer = (record.segments ?? [])
+        .filter((segment) => segment?.type === 'answer')
+        .map((segment) => segment.text ?? '')
+        .join('')
+        .trim();
+      if (answer) return answer.slice(0, MAX_TEXT);
+    }
+  }
+  // Models that make files also log progress to debugoutput, so it only counts when there are no files.
+  const output = task.debugoutput?.trim();
+  return files === 0 && output ? output.slice(0, MAX_TEXT) : null;
+}
+
 export function toTaskView(task: WiroTask): TaskView {
   const status = task.status ?? 'task_queue';
   const outputs: TaskOutput[] = (task.outputs ?? [])
     .filter((output) => typeof output.url === 'string' && output.url.startsWith('https://'))
-    .map((output) => ({
-      url: output.url as string,
-      contentType: output.contenttype ?? '',
-      name: output.name ?? '',
-    }));
-  const base = { status, outputs, seconds: toNumber(task.elapsedseconds), cost: null, error: null };
+    .map((output) => {
+      const contentType = output.contenttype ?? '';
+      const name = output.name ?? '';
+      return { url: output.url as string, contentType, name, kind: outputKind(contentType, name) };
+    });
+  const base = {
+    status,
+    outputs,
+    text: null,
+    seconds: toNumber(task.elapsedseconds),
+    cost: null,
+    error: null,
+  };
 
   if (status === 'task_cancel') {
     return { ...base, stage: 'cancelled', done: true, error: 'The task was cancelled.' };
   }
   if (status === 'task_postprocess_end') {
-    if (task.pexit === '0' && outputs.length > 0) {
-      return { ...base, stage: 'done', done: true, cost: toNumber(task.totalcost) };
+    const text = textOf(task, outputs.length);
+    if (task.pexit === '0' && (outputs.length > 0 || text)) {
+      return { ...base, text, stage: 'done', done: true, cost: toNumber(task.totalcost) };
     }
     return {
       ...base,
@@ -90,7 +137,7 @@ export function toTaskView(task: WiroTask): TaskView {
       cost: toNumber(task.totalcost),
       error:
         shortError(task.debugerror) ??
-        (task.pexit === '0' ? 'The model finished without an output file.' : 'The model could not finish this task.'),
+        (task.pexit === '0' ? 'The model finished without an output.' : 'The model could not finish this task.'),
     };
   }
   return { ...base, stage: STAGE_BY_STATUS[status] ?? 'preparing', done: false };

@@ -1,17 +1,20 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import type { ReactNode } from 'react';
-import { NavLinks } from './nav-links';
+import { Suspense, type ReactNode } from 'react';
+import { NavLinks, NavList } from './nav-links';
 
 export const REPO_URL = 'https://github.com/wiroai/Wiro-Next-Starter';
 
+const NAV_CLASS =
+  'order-last -mx-4 flex h-10 w-[calc(100%+2rem)] items-center overflow-x-auto px-3 md:order-none md:mx-0 md:h-auto md:w-auto md:overflow-visible md:px-0';
+
 export function SiteHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/85 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
+    <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 px-4 sm:px-6 md:h-14 md:flex-nowrap">
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="flex h-14 shrink-0 items-center gap-2 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           <Image src="/brand/wiro-icon-black.png" width={22} height={22} alt="" className="dark:hidden" priority />
           <Image
@@ -23,16 +26,18 @@ export function SiteHeader() {
             priority
           />
           <span className="font-semibold tracking-tight">Wiro AI</span>
-          <span className="hidden text-sm text-muted md:inline">Next.js Starter</span>
+          <span className="hidden text-sm text-muted lg:inline">Next.js Starter</span>
         </Link>
-        <NavLinks />
         <a
           href={REPO_URL}
-          className="ml-auto flex size-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="ml-auto flex size-9 items-center justify-center rounded-md text-muted transition-colors hover:bg-foreground/5 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none md:order-last"
           aria-label="Source code on GitHub"
         >
           <GitHubIcon />
         </a>
+        <Suspense fallback={<NavList className={NAV_CLASS} pathname={null} />}>
+          <NavLinks className={NAV_CLASS} />
+        </Suspense>
       </div>
     </header>
   );

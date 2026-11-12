@@ -2,8 +2,8 @@ import { createWiro } from '@wiro-ai/wiro-llm';
 import { APICallError, convertToModelMessages, streamText } from 'ai';
 import { z } from 'zod';
 import { MAX_CHAT_MESSAGES, MAX_MESSAGE_LENGTH, type ChatMessage } from '@/lib/chat';
-import { findChatModel } from '@/lib/models';
-import { describeError, gatewayApiKey } from '@/lib/wiro';
+import { describeError, gatewayApiKey } from '@/lib/wiro/client';
+import { listChatModels } from '@/lib/wiro/gateway';
 
 export const maxDuration = 60;
 
@@ -46,8 +46,14 @@ export async function POST(request: Request) {
   const parsed = ChatRequest.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return text('The request is not valid.', 400);
 
-  const model = findChatModel(parsed.data.model);
-  if (!model) return text(`${parsed.data.model} is not one of this app's chat models.`, 400);
+  let model;
+  try {
+    model = (await listChatModels()).find((item) => item.id === parsed.data.model);
+  } catch (error) {
+    const { status, message } = describeError(error);
+    return text(message, status);
+  }
+  if (!model) return text(`${parsed.data.model} is not a chat model on the Wiro LLM gateway.`, 400);
 
   // Text only, and only the latest messages, starting with a user message.
   const recent = parsed.data.messages
@@ -80,7 +86,8 @@ export async function POST(request: Request) {
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages<ChatMessage>(recent),
     maxOutputTokens: 4096,
-    providerOptions: model.reasoningEffort ? { wiro: { reasoningEffort: model.reasoningEffort } } : undefined,
+    // Low effort keeps answers quick on models that think before they answer.
+    providerOptions: model.reasoning ? { wiro: { reasoningEffort: 'low' } } : undefined,
     abortSignal: request.signal,
   });
 

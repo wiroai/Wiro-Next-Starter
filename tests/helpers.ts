@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
 
-export type FetchCall = { url: string; init: RequestInit };
+export type FetchCall = { url: string; method: string; init: RequestInit };
 
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -8,19 +8,37 @@ export function jsonResponse(body: unknown, status = 200): Response {
 
 /** Replaces global fetch with one that answers with `responses` in order and records each call. */
 export function mockFetch(...responses: Response[]) {
-  const calls: FetchCall[] = [];
-  const fetchMock = vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
-    calls.push({ url: String(input instanceof Request ? input.url : input), init });
+  return routeFetch(() => {
     const response = responses.shift();
-    if (!response) throw new Error(`Unexpected fetch to ${String(input)}`);
+    if (!response) throw new Error('Unexpected fetch');
     return response;
   });
-  vi.stubGlobal('fetch', fetchMock);
+}
+
+/** Replaces global fetch with a handler that picks the answer from the request, and records each call. */
+export function routeFetch(handler: (call: FetchCall) => Response | Promise<Response>) {
+  const calls: FetchCall[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: RequestInfo | URL, init: RequestInit = {}) => {
+      const call = {
+        url: String(input instanceof Request ? input.url : input),
+        method: (init.method ?? 'GET').toUpperCase(),
+        init,
+      };
+      calls.push(call);
+      return handler(call);
+    }),
+  );
   return calls;
 }
 
 export function headersOf(call: FetchCall): Headers {
   return new Headers(call.init.headers);
+}
+
+export function bodyOf(call: FetchCall): Record<string, unknown> {
+  return JSON.parse(String(call.init.body)) as Record<string, unknown>;
 }
 
 export function jsonRequest(url: string, body: unknown): Request {
@@ -61,4 +79,39 @@ export async function uiStreamEvents(response: Response): Promise<Record<string,
     .split('\n')
     .filter((line) => line.startsWith('data: ') && line !== 'data: [DONE]')
     .map((line) => JSON.parse(line.slice('data: '.length)) as Record<string, unknown>);
+}
+
+/** A Tool/Detail item the way the catalog sends it, for a small image model. */
+export function toolItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    cleanslugowner: 'pruna',
+    cleanslugproject: 'p-image',
+    title: 'P-Image',
+    seodescription: 'Fast text to image.',
+    categories: ['tool', 'text-to-image'],
+    image: 'https://cdn.wiro.ai/uploads/models/p-image-cover.webp',
+    dynamicprice: '[{"inputs":{},"price":0.005,"priceMethod":"cpr"}]',
+    cps: '0',
+    approximatelycost: '0',
+    taskstat: { runcount: '100', successcount: '100', elapsedseconds: '900' },
+    parameters: [
+      {
+        title: 'Inputs',
+        items: [
+          { id: 'prompt', type: 'textarea', label: 'Prompt', required: true, defaultvalue: 'A sample prompt' },
+          {
+            id: 'aspectRatio',
+            type: 'select',
+            label: 'Aspect ratio',
+            defaultvalue: '16:9',
+            options: [
+              { value: '1:1', label: '1:1' },
+              { value: '16:9', label: '16:9' },
+            ],
+          },
+        ],
+      },
+    ],
+    ...overrides,
+  };
 }

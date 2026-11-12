@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 
 :root {
+  /* Sticky header height: two rows on phones, one from 768 px. */
+  --header-height: 6.0625rem;
   --background: #f9f8f5;
   --foreground: #111111;
   --muted: #5d5d57;
@@ -27,6 +29,12 @@
     --accent-foreground: #111111;
     --ring: #f2f2ef;
     --danger: #ff8a7a;
+  }
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --header-height: 3.5625rem;
   }
 }
 
@@ -75,6 +83,13 @@
   ::selection {
     background: color-mix(in srgb, var(--foreground) 18%, transparent);
   }
+}
+
+/* Shows transparent parts of an image, in both themes. */
+.checkerboard {
+  --checker: color-mix(in srgb, var(--foreground) 9%, transparent);
+  background-image: conic-gradient(var(--checker) 25%, transparent 0 50%, var(--checker) 0 75%, transparent 0);
+  background-size: 16px 16px;
 }
 
 /* Model answers in the chat. */

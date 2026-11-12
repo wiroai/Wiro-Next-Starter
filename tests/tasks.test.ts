@@ -38,7 +38,8 @@ describe('toTaskView', () => {
       status: 'task_postprocess_end',
       stage: 'done',
       done: true,
-      outputs: [{ url: IMAGE.url, contentType: 'image/png', name: '0.png' }],
+      outputs: [{ url: IMAGE.url, contentType: 'image/png', name: '0.png', kind: 'image' }],
+      text: null,
       cost: 0.005,
       seconds: 6,
       error: null,
@@ -59,7 +60,7 @@ describe('toTaskView', () => {
   it('treats a successful exit without an output file as a failure', () => {
     expect(toTaskView({ status: 'task_postprocess_end', pexit: '0', outputs: [] })).toMatchObject({
       stage: 'failed',
-      error: 'The model finished without an output file.',
+      error: 'The model finished without an output.',
     });
   });
 
@@ -76,6 +77,59 @@ describe('toTaskView', () => {
     });
     expect(view.outputs.map((output) => output.url)).toEqual([IMAGE.url]);
     expect(view.error).toHaveLength(300);
+  });
+});
+
+describe('text answers', () => {
+  it('reads structured LLM content', () => {
+    const view = toTaskView({
+      status: 'task_postprocess_end',
+      pexit: '0',
+      outputs: [{ contenttype: 'raw', content: { raw: 'Hello there.', segments: [] } }],
+      debugoutput: 'Hello there.',
+    });
+    expect(view).toMatchObject({ stage: 'done', text: 'Hello there.', outputs: [] });
+  });
+
+  it('reads answer segments when raw is empty', () => {
+    const view = toTaskView({
+      status: 'task_postprocess_end',
+      pexit: '0',
+      outputs: [
+        {
+          contenttype: 'raw',
+          content: {
+            segments: [
+              { type: 'thinking', text: 'Hmm' },
+              { type: 'answer', text: 'Yes.' },
+            ],
+          },
+        },
+      ],
+    });
+    expect(view.text).toBe('Yes.');
+  });
+
+  it('uses debugoutput as the answer only when the task made no files', () => {
+    expect(toTaskView({ status: 'task_postprocess_end', pexit: '0', debugoutput: ' The transcript. ' }).text).toBe(
+      'The transcript.',
+    );
+    expect(
+      toTaskView({ status: 'task_postprocess_end', pexit: '0', debugoutput: '100% done', outputs: [IMAGE] }).text,
+    ).toBeNull();
+  });
+
+  it('tells output kinds apart by type and name', () => {
+    const view = toTaskView({
+      status: 'task_postprocess_end',
+      pexit: '0',
+      outputs: [
+        { url: 'https://cdn1.wiro.ai/a.mp3', contenttype: 'audio/mpeg', name: 'a.mp3' },
+        { url: 'https://cdn1.wiro.ai/b.txt', contenttype: '', name: 'b.txt' },
+        { url: 'https://cdn1.wiro.ai/c.glb', contenttype: 'model/gltf-binary', name: 'c.glb' },
+      ],
+    });
+    expect(view.outputs.map((output) => output.kind)).toEqual(['audio', 'text', 'file']);
   });
 });
 

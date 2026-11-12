@@ -1,8 +1,8 @@
 {
   "name": "wiro-next-starter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Next.js starter for Wiro AI: text to image, text to video with live progress, and a streaming chat on the Wiro LLM gateway with the AI SDK.",
+  "description": "Next.js starter for Wiro AI: a Playground for 1,000+ models, image, video and audio tools, a streaming LLM chat with the AI SDK, and run history.",
   "license": "MIT",
   "author": "Wiro AI",
   "homepage": "https://github.com/wiroai/Wiro-Next-Starter#readme",
@@ -35,6 +35,7 @@
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-markdown": "^10.1.0",
+    "remark-breaks": "^4.0.0",
     "remark-gfm": "^4.0.1",
     "server-only": "^0.0.1",
     "zod": "^4.6.7"

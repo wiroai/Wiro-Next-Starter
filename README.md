@@ -4,7 +4,7 @@
 
 # Wiro AI Next.js Starter
 
-A Next.js app with three working pages on Wiro AI: text to image, text to video with live progress, and a streaming LLM chat built with the Vercel AI SDK.
+A Next.js app for the Wiro AI API: a Playground for any of the 1,000+ models, image, video and audio tools, a streaming LLM chat built with the Vercel AI SDK, and a history of your runs.
 
 [![Next.js 16](https://img.shields.io/badge/Next.js-16-111111?style=for-the-badge&color=111111)](https://nextjs.org) [![AI SDK 7](https://img.shields.io/badge/AI%20SDK-7-111111?style=for-the-badge&color=111111)](https://ai-sdk.dev) [![CI](https://img.shields.io/github/actions/workflow/status/wiroai/Wiro-Next-Starter/ci.yml?branch=main&style=for-the-badge&label=CI&color=111111)](https://github.com/wiroai/Wiro-Next-Starter/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-111111?style=for-the-badge&color=111111)](./LICENSE)
 
@@ -16,18 +16,22 @@ A Next.js app with three working pages on Wiro AI: text to image, text to video 
 
 </div>
 
-This starter shows how to call [Wiro AI](https://wiro.ai) from a Next.js App Router app. Images and videos go through the Wiro AI Run API: a route handler starts a task with `POST /Run/{owner}/{model}`, and the page polls the task until the file is ready. The chat streams answers from the Wiro LLM gateway at `https://llm.wiro.ai/v1` with the AI SDK and [`@wiro-ai/wiro-llm`](https://github.com/wiroai/Wiro-LLM). Every call to Wiro AI runs on the server, so your API key never reaches the browser.
+This starter shows how to build on [Wiro AI](https://wiro.ai) with the Next.js App Router. Model lists come from the Wiro AI catalog by category, each model's form is built from its own inputs, and the price of a run shows before it starts. Images, video and audio go through the Wiro AI Run API, with files uploaded to Wiro AI first and the task followed until it ends. The chat streams from the Wiro LLM gateway with the AI SDK and [`@wiro-ai/wiro-llm`](https://github.com/wiroai/Wiro-LLM). Every call to Wiro AI runs in a route handler, so your API key never reaches the browser.
 
-![The text to image page with a generated image](.github/assets/screenshot-image.png)
+![The Image page with a generated image and the tools it can go to next](.github/assets/screenshot-image.png)
 
 ## What's inside
 
-- **Text to image** with P-Image, GPT Image 2, Nano Banana 2 and Seedream 4.5. Pick a model, an aspect ratio and the model's own options.
-- **Text to video** with Seedance 1 Pro Fast, Kling 3 and Veo 3.1 Fast. The page shows each stage of the task (queued, preparing, generating, saving) with a timer, then plays the clip. Start from a prompt, or from an image: the **Animate** button under an image result opens the video page with that image as the first frame.
-- **Chat** with GPT-5.4 Nano, GPT-5.4 Mini, Gemini 3.5 Flash-Lite, DeepSeek V4.1 Flash and Claude Sonnet 5, built on `useChat` from the AI SDK. Answers render as Markdown, and each reply shows what it cost.
-- **Server-side calls only.** Three route handlers talk to Wiro AI. They run only the models listed in `lib/models.ts`, with the choices listed there.
-- **Optional password.** Set `BASIC_AUTH_PASSWORD` to keep a deployment to yourself.
-- Next.js 16 with the App Router, React 19, TypeScript, Tailwind CSS 4, light and dark themes, ESLint, Prettier and Vitest.
+- **Playground.** Browse the catalog by category (text to image, editing, upscaling, background removal, video, speech, music, transcription, OCR and more) or search all of it, then run any model. The form comes from the model's schema, with its advanced settings folded away and its sample input one click away.
+- **Image.** Generate, Edit with a prompt, Upscale and Remove background. Each tool starts on a default model and lists every model of its category.
+- **Video.** Text to video and Image to video, with each stage of the task and a timer while it runs.
+- **Audio.** Speech in any voice and language the model offers, Music from a description, and Transcribe for audio files.
+- **Chat.** Every chat model on the Wiro LLM gateway, with search and prices per million tokens, streamed with `useChat`, with Markdown answers and the cost of each reply.
+- **History.** Your runs in this browser with their outputs and costs. Runs that are still going update on their own.
+- **One result into the next tool.** An image goes on to Edit, Upscale, Remove background or Animate in one click, and a speech file to Transcribe.
+- **The price before each run,** worked out from the model's price list the way Wiro AI bills it, and the billed amount after.
+- **Ready to deploy.** Calls only from route handlers, every request checked against the model's inputs, an optional password for the whole app and an optional price limit per run.
+- Next.js 16 with the App Router and Cache Components, React 19, TypeScript, Tailwind CSS 4, AI SDK 7, light and dark themes, ESLint, Prettier and Vitest.
 
 ## Deploy
 
@@ -35,7 +39,7 @@ You need a Wiro AI project. Create one at [wiro.ai/panel/project/new](https://wi
 
 ### Deploy with Vercel
 
-Click **Deploy with Vercel** above. Vercel copies this repository to your GitHub account, asks for `WIRO_API_KEY` and deploys the app. For a signature project, add `WIRO_API_SECRET` afterwards under **Settings → Environment Variables** and redeploy.
+Click **Deploy with Vercel** above. Vercel copies this repository to your GitHub account, asks for `WIRO_API_KEY` and deploys the app. For a signature project, add `WIRO_API_SECRET` afterwards under **Settings → Environment Variables** and redeploy. The other settings in [Environment variables](#environment-variables) are optional.
 
 ### Deploy on Railway
 
@@ -49,6 +53,17 @@ Railway builds the app with Railpack, which reads `package.json`: it runs `npm r
 ### Other hosts
 
 `npm run build` and `npm start` run the app on any host with Node.js 22 or later.
+
+### Run a public demo
+
+Anyone who can open a deployment can run models with its key. For a demo that strangers can try:
+
+1. In your Wiro AI dashboard, create a team for the demo, move a small amount to its wallet and set a team spend limit. You can also limit the models the team can run. See [Team billing](https://wiro.ai/docs/organizations-billing).
+2. Create a project in that team and use its API key as `WIRO_API_KEY`.
+3. Set `MAX_RUN_PRICE`, for example to `0.10`, so no single run costs more.
+4. Leave `BASIC_AUTH_PASSWORD` empty so visitors can open the app.
+
+For a deployment only you use, set `BASIC_AUTH_PASSWORD` instead.
 
 ## Run it locally
 
@@ -67,86 +82,92 @@ npm run dev
 
 ## Environment variables
 
-| Variable              | Required               | What it does                                                                                                       |
-| --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `WIRO_API_KEY`        | Yes                    | API key of your Wiro AI project                                                                                    |
-| `WIRO_API_SECRET`     | For signature projects | API secret of the same project. Run API requests are signed with it, and the LLM gateway gets `API_KEY:API_SECRET` |
-| `BASIC_AUTH_PASSWORD` | No                     | When set, the browser asks for this password before it opens any page. Any user name works                         |
+| Variable              | Required               | What it does                                                                                                                             |
+| --------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `WIRO_API_KEY`        | Yes                    | API key of your Wiro AI project                                                                                                          |
+| `WIRO_API_SECRET`     | For signature projects | API secret of the same project. Run API requests are signed with it, and the LLM gateway gets `API_KEY:API_SECRET`                       |
+| `BASIC_AUTH_PASSWORD` | No                     | When set, the browser asks for this password before it opens any page. Any user name works                                               |
+| `MAX_RUN_PRICE`       | No                     | The most one run may cost, in USD, such as `0.10`. Runs that cost more, or have no price set before the run, are refused                 |
+| `MAX_UPLOAD_MB`       | No                     | The largest file the upload route takes, 25 by default. Vercel functions accept request bodies up to 4.5 MB, so use a link for big files |
 
 The app reads these on the server when a request comes in, so a build works without them. None of them starts with `NEXT_PUBLIC_`, so Next.js never sends them to the browser.
 
 ## How it works
 
 ```text
-Browser                         This app (route handlers)              Wiro AI
-POST /api/runs             ->   check the model and settings     ->    POST /Run/{owner}/{model}
-                           <-   { token }
-GET /api/tasks/{token}     ->   read the task                    ->    POST /Task/Detail
-  (every 1.5 s or 3 s)     <-   stage, output URLs, time, cost
-POST /api/chat             ->   streamText(wiro(model))          ->    llm.wiro.ai/v1/chat/completions
-                           <-   streamed reply, model and cost
+Browser                           This app (route handlers)                Wiro AI
+GET  /api/models?categories=  ->  catalog, cached for 10 minutes      ->   POST /Tool/List
+GET  /api/models/{owner}/{id} ->  inputs and price list               ->   POST /Tool/Detail
+POST /api/uploads             ->  store the file                      ->   POST /File/Upload
+POST /api/runs                ->  check the form, price, limit        ->   POST /Run/{owner}/{model}
+                              <-  { token, price }
+GET  /api/tasks/{token}       ->  stage, outputs, text, cost          ->   POST /Task/Detail
+POST /api/chat                ->  streamText(wiro(model))             ->   llm.wiro.ai/v1/chat/completions
 ```
 
-| File                             | What it does                                                                                                                                                                      |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `app/api/runs/route.ts`          | Checks the request against `lib/models.ts` and starts a task with [`POST /Run/{owner}/{model}`](https://wiro.ai/docs/run-a-model). Returns only the task token.                   |
-| `app/api/tasks/[token]/route.ts` | Reads the task with [`POST /Task/Detail`](https://wiro.ai/docs/tasks) and returns its stage, output URLs, time and cost.                                                          |
-| `app/api/chat/route.ts`          | Streams a reply from the [Wiro LLM gateway](https://wiro.ai/docs/completions-api) with `streamText` and `@wiro-ai/wiro-llm`, and adds the model and cost to the message metadata. |
-| `lib/wiro.ts`                    | The Run API client: authentication headers, errors and task reads. It imports `server-only`, so it can't end up in browser code.                                                  |
-| `lib/models.ts`                  | The models the app offers and their settings.                                                                                                                                     |
-| `lib/tasks.ts`                   | Turns Wiro AI task statuses into the stages the page shows.                                                                                                                       |
-| `lib/use-task-run.ts`            | The React hook that starts a task and polls it.                                                                                                                                   |
-| `proxy.ts`                       | The optional password.                                                                                                                                                            |
+| Route                              | What it does                                                                                                                                                  |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `app/api/models`                   | Lists the models of one or more categories from the [catalog](https://wiro.ai/docs/models), or searches all of it. Hidden models are left out.                |
+| `app/api/models/[owner]/[project]` | One model's inputs and price list.                                                                                                                            |
+| `app/api/uploads`                  | Stores a file from the browser with Wiro AI and returns its URL, which the form sends as a file input.                                                        |
+| `app/api/runs`                     | Checks the form against the model's inputs, prices the run, applies `MAX_RUN_PRICE` and starts the task with [`POST /Run`](https://wiro.ai/docs/run-a-model). |
+| `app/api/tasks/[token]`            | Reads the task with [`POST /Task/Detail`](https://wiro.ai/docs/tasks): its stage, output files, text answer, time and cost.                                   |
+| `app/api/chat/models`              | The chat models on the [Wiro LLM gateway](https://wiro.ai/docs/completions-api), with their prices.                                                           |
+| `app/api/chat`                     | Streams a reply with `streamText` and `@wiro-ai/wiro-llm`, and adds the model and cost to the message metadata.                                               |
+| `app/api/config`                   | The limits the page shows before a run. It never returns the key.                                                                                             |
 
-A task is finished when its status is `task_postprocess_end`, with `pexit` `"0"` on success, or `task_cancel`; see [Tasks](https://wiro.ai/docs/tasks). The browser only ever gets the task token, never the numeric task ID.
+The code behind them:
 
-Projects that use signature authentication send `x-nonce` and `x-signature` with every Run API request, where the signature is HMAC-SHA256 of the API secret plus the nonce, keyed with the API key. See [Authentication](https://wiro.ai/docs/authentication).
+| File                     | What it does                                                                                                                                             |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lib/catalog/schema.ts`  | Reads a model's inputs and turns form values into Run parameters: file inputs and their URL fields, checkboxes, ranges and defaults. Runs on both sides. |
+| `lib/catalog/pricing.ts` | Prices a run from the model's price list the way Wiro AI bills it: per run, per output, per character, per second of audio or video, or by run time.     |
+| `lib/catalog/tools.ts`   | The tools of the Image, Video and Audio pages with their categories and default models, and the Playground's categories.                                 |
+| `lib/catalog/filters.ts` | Models the app never lists: uncensored and NSFW models, and live voice models that need a realtime connection.                                           |
+| `lib/wiro/`              | Server only: the Run API client with request signing, the catalog cache, the gateway model list and the limits.                                          |
+| `lib/use-task-run.ts`    | The React hook that starts a task and polls it.                                                                                                          |
+| `lib/history.ts`         | The History page's store in `localStorage`.                                                                                                              |
+| `proxy.ts`               | The optional password.                                                                                                                                   |
 
-![The video page while a task runs](.github/assets/screenshot-video-progress.png)
+A task is finished when its status is `task_postprocess_end`, with `pexit` `"0"` on success, or `task_cancel`; see [Tasks](https://wiro.ai/docs/tasks). The browser only ever gets the task token, never the numeric task ID. Projects that use signature authentication send `x-nonce` and `x-signature` with every Run API request, where the signature is HMAC-SHA256 of the API secret plus the nonce, keyed with the API key; see [Authentication](https://wiro.ai/docs/authentication).
 
-![The video page with a finished clip](.github/assets/screenshot-video.png)
+## Tools and default models
 
-![The chat page with a Markdown table from GPT-5.4 Nano](.github/assets/screenshot-chat.png)
+| Page  | Tool              | Lists the models of                 | Starts on                        |
+| ----- | ----------------- | ----------------------------------- | -------------------------------- |
+| Image | Generate          | `text-to-image`                     | `pruna/p-image`                  |
+| Image | Edit              | `image-editing`                     | `google/nano-banana-2`           |
+| Image | Upscale           | `upscale`, `restoration`            | `xinntao/real-esrgan`            |
+| Image | Remove background | `background-removal`                | `briaai/rmbg-2-0`                |
+| Video | Text to video     | `text-to-video`                     | `bytedance/seedance-v1-pro-fast` |
+| Video | Image to video    | `image-to-video`                    | `bytedance/seedance-v1-pro-fast` |
+| Audio | Speech            | `text-to-speech`                    | `elevenlabs/eleven-v4`           |
+| Audio | Music             | `text-to-music`, `music-generation` | `elevenlabs/text-to-music-v2-5`  |
+| Audio | Transcribe        | `speech-to-text`                    | `elevenlabs/speech-to-text`      |
+| Chat  |                   | the Wiro LLM gateway                | `openai/gpt-5-4-nano`            |
 
-## Models
+**Change model** on any tool lists the other models of its categories with their prices. Links can open a tool on a model and a file: `/image?tab=edit&model=openai/gpt-image-2&image=https://...`
 
-| Page  | Model                                                                        | ID                               |
-| ----- | ---------------------------------------------------------------------------- | -------------------------------- |
-| Image | [P-Image](https://wiro.ai/models/pruna/p-image)                              | `pruna/p-image`                  |
-| Image | [GPT Image 2](https://wiro.ai/models/openai/gpt-image-2)                     | `openai/gpt-image-2`             |
-| Image | [Nano Banana 2](https://wiro.ai/models/google/nano-banana-2)                 | `google/nano-banana-2`           |
-| Image | [Seedream 4.5](https://wiro.ai/models/bytedance/seedream-v4-5)               | `bytedance/seedream-v4-5`        |
-| Video | [Seedance 1 Pro Fast](https://wiro.ai/models/bytedance/seedance-v1-pro-fast) | `bytedance/seedance-v1-pro-fast` |
-| Video | [Kling 3](https://wiro.ai/models/klingai/kling-v3)                           | `klingai/kling-v3`               |
-| Video | [Veo 3.1 Fast](https://wiro.ai/models/google/veo3-1-fast)                    | `google/veo3-1-fast`             |
-| Chat  | [GPT-5.4 Nano](https://wiro.ai/models/openai/gpt-5-4-nano)                   | `openai/gpt-5-4-nano`            |
-| Chat  | [GPT-5.4 Mini](https://wiro.ai/models/openai/gpt-5-4-mini)                   | `openai/gpt-5-4-mini`            |
-| Chat  | [Gemini 3.5 Flash-Lite](https://wiro.ai/models/google/gemini-3-5-flash-lite) | `google/gemini-3-5-flash-lite`   |
-| Chat  | [DeepSeek V4.1 Flash](https://wiro.ai/models/deepseek/v4-1-flash)            | `deepseek/v4-1-flash`            |
-| Chat  | [Claude Sonnet 5](https://wiro.ai/models/claude/sonnet-5)                    | `claude/sonnet-5`                |
+### Customize
 
-### Add a model
+- **Add a tool:** add an entry to `TOOLS` in `lib/catalog/tools.ts` with its page, Wiro categories and default model. It shows up as a tab on that page.
+- **Change the Playground's categories:** edit `CATEGORY_GROUPS` in the same file. The [catalog](https://wiro.ai/models) shows every category.
+- **Hide more models:** extend `isHiddenModel` in `lib/catalog/filters.ts`.
+- **Change the look:** the colors are CSS variables at the top of `app/globals.css`, with a dark set for `prefers-color-scheme: dark`.
 
-The Wiro AI catalog has 1,000+ models. Find one on [wiro.ai/models](https://wiro.ai/models): its page URL gives the ID (`https://wiro.ai/models/google/nano-banana-pro` becomes `google/nano-banana-pro`), and [`POST /Tool/Detail`](https://wiro.ai/docs/models) lists its parameters and their choices. Then add an entry to `imageModels` or `videoModels` in `lib/models.ts`:
+## Screenshots
 
-```ts
-{
-  id: 'google/nano-banana-pro',
-  name: 'Nano Banana Pro',
-  description: "Google's image model.",
-  settings: [ratios('aspectRatio', ['1:1', '16:9', '9:16'], '1:1')],
-},
-```
+![The Playground: models of a category with their prices](.github/assets/screenshot-playground.png)
 
-Each setting's `id` is a parameter name, and the server sends only the choices you list. `fixed` holds parameters sent with every run, such as `samples: '1'` for GPT Image 2. Video models that take a start frame name that parameter in `imageInput`. Chat models go in `chatModels`, with an ID from [`GET https://llm.wiro.ai/v1/models`](https://wiro.ai/docs/completions-api).
+![A model in the Playground, with the form built from its inputs](.github/assets/screenshot-playground-model.png)
 
-## Before you share a deployment
+![The Video page while a task runs](.github/assets/screenshot-video-progress.png)
 
-Anyone who can open your deployment can run models with your key. To keep that in check:
+![The Audio page with a speech result](.github/assets/screenshot-audio.png)
 
-- Set `BASIC_AUTH_PASSWORD`, or put your own sign-in in front of the app.
-- Keep `lib/models.ts` to the models you want to offer. The route handlers refuse every other model and setting, and they cap the length of prompts and chat messages.
-- Use a key from a project in a Wiro AI team with a spend limit and model access controls. See [Team billing](https://wiro.ai/docs/organizations-billing).
+![The Chat page with a Markdown table from GPT-5.4 Nano](.github/assets/screenshot-chat.png)
+
+![The History page with three runs and their costs](.github/assets/screenshot-history.png)
 
 ## Development
 
@@ -157,11 +178,11 @@ npm run build      # production build
 npm start          # serve the production build
 ```
 
-The tests cover the Run API client, request signing, task status mapping, the three route handlers and the password check. They use a mocked `fetch` and make no network calls. CI runs them with the format check, lint, type check and build on Node.js 22 and 24.
+The tests cover the input handling and pricing, the catalog, the Run API client with request signing, task status mapping, every route handler and the password check. They use a mocked `fetch` and make no network calls. CI runs them with the format check, lint, type check and build on Node.js 22 and 24.
 
 ## Costs
 
-Each run is billed to your Wiro AI account at the model's price, which is listed on its model page. Only successful tasks are billed. The app shows the billed amount under every image, video and chat reply.
+Each run is billed to the Wiro AI account of the API key at the model's price, which the app shows before the run and which is listed on the model's page. Only successful tasks are billed. The app shows the billed amount under every result and chat reply, and the History page adds them up.
 
 ## More from Wiro AI
 
@@ -188,7 +209,7 @@ Each run is billed to your Wiro AI account at the model's price, which is listed
 | [Wiro-Zed](https://github.com/wiroai/Wiro-Zed)                               | Wiro AI MCP server extension for Zed                                                                                                     |
 | [Wiro-Action](https://github.com/wiroai/Wiro-Action)                         | GitHub Action for Wiro AI models and the LLM gateway, [on the GitHub Marketplace](https://github.com/marketplace/actions/wiro-ai-action) |
 | [Wiro-Raycast](https://github.com/wiroai/Wiro-Raycast)                       | Wiro AI extension for Raycast: image and video generation, LLM chat and model search                                                     |
-| [Wiro-Next-Starter](https://github.com/wiroai/Wiro-Next-Starter)             | Next.js starter for Wiro AI: image generation, video generation and LLM chat, ready for Vercel and Railway                               |
+| [Wiro-Next-Starter](https://github.com/wiroai/Wiro-Next-Starter)             | Next.js starter for Wiro AI: Playground, image, video and audio tools, and LLM chat, ready for Vercel and Railway                        |
 | [Wiro-Docs](https://github.com/wiroai/Wiro-Docs)                             | Source of the Wiro AI API docs                                                                                                           |
 
 [Website](https://wiro.ai) · [Models](https://wiro.ai/models) · [Docs](https://wiro.ai/docs) · [X](https://x.com/wiroai)

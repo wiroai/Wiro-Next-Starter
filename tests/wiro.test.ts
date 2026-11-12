@@ -9,8 +9,9 @@ import {
   getTask,
   nextNonce,
   runModel,
+  uploadFile,
   WiroApiError,
-} from '@/lib/wiro';
+} from '@/lib/wiro/client';
 import { headersOf, jsonResponse, mockFetch } from './helpers';
 
 beforeEach(() => {
@@ -118,11 +119,37 @@ describe('describeError', () => {
     [new WiroApiError('Concurrency limit', 200, 96), 429, /Too many tasks/],
     [new WiroApiError('Project authorization is not founded.', 200), 502, /did not accept the API key/],
     [new WiroApiError('Request parameter [prompt] required', 200), 502, /Request parameter/],
+    [new WiroApiError('Team spend limit has been reached', 200), 402, /spend limit/],
     [Object.assign(new Error('timed out'), { name: 'TimeoutError' }), 504, /too long/],
     [new TypeError('fetch failed'), 502, /Could not reach Wiro AI/],
   ])('maps %s', (error, status, message) => {
     const described = describeError(error);
     expect(described.status).toBe(status);
     expect(described.message).toMatch(message);
+  });
+});
+
+describe('uploadFile', () => {
+  it('posts the file as multipart form data and returns its URL', async () => {
+    const calls = mockFetch(
+      jsonResponse({
+        result: true,
+        list: [{ url: 'https://cdn1.wiro.ai/u/a.png', name: 'a.png', contenttype: 'image/png', size: '3' }],
+      }),
+    );
+    await expect(uploadFile(new Blob(['abc'], { type: 'image/png' }), 'a.png')).resolves.toEqual({
+      url: 'https://cdn1.wiro.ai/u/a.png',
+      name: 'a.png',
+      contentType: 'image/png',
+      size: 3,
+    });
+    expect(calls[0].url).toBe('https://api.wiro.ai/v1/File/Upload');
+    expect(headersOf(calls[0]).get('content-type')).toBeNull();
+    expect((calls[0].init.body as FormData).get('file')).toBeInstanceOf(Blob);
+  });
+
+  it('fails when Wiro stores nothing', async () => {
+    mockFetch(jsonResponse({ result: true, list: [] }));
+    await expect(uploadFile(new Blob(['abc']), 'a.bin')).rejects.toThrow('stored no file');
   });
 });

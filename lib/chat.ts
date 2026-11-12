@@ -9,3 +9,6 @@ export type ChatMessage = UIMessage<ChatMetadata>;
 export const MAX_CHAT_MESSAGES = 40;
 
 export const MAX_MESSAGE_LENGTH = 8000;
+
+/** The model the chat starts on. */
+export const DEFAULT_CHAT_MODEL = 'openai/gpt-5-4-nano';

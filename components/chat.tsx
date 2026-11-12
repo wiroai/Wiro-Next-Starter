@@ -3,11 +3,12 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { MAX_MESSAGE_LENGTH, type ChatMessage } from '@/lib/chat';
-import { chatModels } from '@/lib/models';
+import type { ChatModel } from '@/lib/catalog/types';
+import { DEFAULT_CHAT_MODEL, MAX_MESSAGE_LENGTH, type ChatMessage } from '@/lib/chat';
 import { formatCost } from '@/lib/tasks';
+import { chatPrice, ChatModelPicker } from './chat-model-picker';
 import { Markdown } from './markdown';
-import { Button, cx, Select } from './ui';
+import { Button, cx } from './ui';
 
 const transport = new DefaultChatTransport<ChatMessage>({ api: '/api/chat' });
 
@@ -33,12 +34,33 @@ function reasoningOf(message: ChatMessage): string {
     .trim();
 }
 
-function modelName(id: string | undefined): string | undefined {
-  return chatModels.find((model) => model.id === id)?.name ?? id;
+/** The gateway's chat models, loaded once per page. */
+function useChatModels(): { models: ChatModel[]; error: string | null } {
+  const [state, setState] = useState<{ models: ChatModel[]; error: string | null }>({ models: [], error: null });
+  useEffect(() => {
+    let active = true;
+    fetch('/api/chat/models')
+      .then(async (response) => {
+        const body = (await response.json().catch(() => ({}))) as { models?: ChatModel[]; error?: string };
+        if (!response.ok || !body.models) throw new Error(body.error ?? 'Could not load the chat models.');
+        if (active) setState({ models: body.models, error: null });
+      })
+      .catch((error: unknown) => {
+        if (active)
+          setState({ models: [], error: error instanceof Error ? error.message : 'Could not load the models.' });
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+  return state;
 }
 
 export function Chat() {
-  const [modelId, setModelId] = useState(chatModels[0].id);
+  const { models, error: modelsError } = useChatModels();
+  const [modelId, setModelId] = useState(DEFAULT_CHAT_MODEL);
+  const current = models.find((model) => model.id === modelId);
+  const modelName = (id: string | undefined) => models.find((model) => model.id === id)?.name ?? id;
   const [input, setInput] = useState('');
   const { messages, sendMessage, status, stop, error, regenerate, setMessages, clearError } = useChat<ChatMessage>({
     transport,
@@ -86,20 +108,15 @@ export function Chat() {
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3 sm:px-6">
-          <label htmlFor="chat-model" className="sr-only">
-            Model
-          </label>
-          <Select
-            id="chat-model"
-            value={modelId}
-            onChange={(event) => setModelId(event.target.value)}
-            choices={chatModels.map((model) => ({ value: model.id, label: model.name }))}
-            className="w-56"
-          />
-          <p className="hidden min-w-0 truncate text-sm text-muted sm:block">
-            {chatModels.find((model) => model.id === modelId)?.description}
-          </p>
-          <Button variant="ghost" onClick={newChat} className="ml-auto h-9 px-3" disabled={messages.length === 0}>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <span className="truncate font-mono text-[13px] font-medium">{modelId}</span>
+            <span className="truncate text-xs text-muted">
+              {modelsError ??
+                (current ? [current.name, chatPrice(current)].filter(Boolean).join(' · ') : 'Loading models…')}
+            </span>
+          </div>
+          <ChatModelPicker models={models} current={modelId} onPick={(model) => setModelId(model.id)} />
+          <Button variant="ghost" onClick={newChat} className="h-9 px-3" disabled={messages.length === 0}>
             New chat
           </Button>
         </div>
@@ -143,6 +160,7 @@ export function Chat() {
               <AssistantMessage
                 key={message.id}
                 message={message}
+                modelLabel={modelName(message.metadata?.model)}
                 streaming={status === 'streaming' && message.id === last?.id}
               />
             ),
@@ -210,7 +228,15 @@ export function Chat() {
   );
 }
 
-function AssistantMessage({ message, streaming }: { message: ChatMessage; streaming: boolean }) {
+function AssistantMessage({
+  message,
+  modelLabel,
+  streaming,
+}: {
+  message: ChatMessage;
+  modelLabel: string | undefined;
+  streaming: boolean;
+}) {
   const text = textOf(message);
   const reasoning = reasoningOf(message);
   const [copied, setCopied] = useState(false);
@@ -230,7 +256,7 @@ function AssistantMessage({ message, streaming }: { message: ChatMessage; stream
       {!streaming && text ? (
         <div className="flex items-center gap-3 text-xs text-muted">
           <span>
-            {modelName(message.metadata?.model)}
+            {modelLabel}
             {cost ? ` · ${cost}` : ''}
           </span>
           <button

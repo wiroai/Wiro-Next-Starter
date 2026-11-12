@@ -12,7 +12,7 @@ A Next.js app for the Wiro AI API: a Playground for any of the 1,000+ models, im
 
 <img src="https://wiro.ai/images/koala/accent-heavy-koala.png" alt="Wiro AI koala mascot" width="60" />
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwiroai%2FWiro-Next-Starter&env=WIRO_API_KEY&envDescription=API%20key%20of%20your%20Wiro%20AI%20project&envLink=https%3A%2F%2Fwiro.ai%2Fdocs%2Fauthentication&project-name=wiro-next-starter&repository-name=wiro-next-starter) [![Deploy on Railway](https://railway.com/button.svg)](#deploy-on-railway)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwiroai%2FWiro-Next-Starter&env=WIRO_API_KEY&envDescription=API%20key%20of%20your%20Wiro%20AI%20project&envLink=https%3A%2F%2Fwiro.ai%2Fdocs%2Fauthentication&project-name=wiro-next-starter&repository-name=wiro-next-starter) [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/d9X1ON?referralCode=oJDnIx&utm_medium=integration&utm_source=button&utm_campaign=wiro-next-starter)
 
 </div>
 
@@ -43,10 +43,9 @@ Click **Deploy with Vercel** above. Vercel copies this repository to your GitHub
 
 ### Deploy on Railway
 
-1. Fork this repository.
-2. In Railway, choose **New Project → Deploy from GitHub repo** and pick your fork.
-3. Under **Variables**, add `WIRO_API_KEY`, and `WIRO_API_SECRET` for a signature project.
-4. Under **Settings → Networking**, click **Generate Domain**.
+Click **Deploy on Railway** above. Railway opens the template, asks for `WIRO_API_KEY` and deploys the app. For a signature project, fill in `WIRO_API_SECRET` as well. The other variables are optional (see [Environment variables](#environment-variables)).
+
+To deploy your own fork instead, choose **New Project → Deploy from GitHub repo** in Railway and pick the fork, add `WIRO_API_KEY` under **Variables**, then click **Generate Domain** under **Settings → Networking**.
 
 Railway builds the app with Railpack, which reads `package.json`: it runs `npm run build`, starts the app with `npm start` and takes the Node.js version from `engines`. `next start` listens on the `PORT` that Railway sets, so no Railway config file is needed. If you add a healthcheck, use `/`.
 

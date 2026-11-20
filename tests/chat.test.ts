@@ -144,6 +144,36 @@ describe('POST /api/chat', () => {
     expect(completions()).toHaveLength(0);
   });
 
+  // The gateway answers a refusal with an HTTP error before any stream starts.
+  const LIMIT =
+    "This API key's monthly spend limit is reached ($20.00 of $20.00). It resets on December 1, 2026 at 00:00 UTC.";
+  const RULE = "This team can't use openai/gpt-5-4-nano. Model Access rules decide which models can run.";
+  it.each([
+    [402, 'insufficient_quota', LIMIT, 'spend_limit_reached', LIMIT],
+    [403, 'permission_error', RULE, 'model_not_allowed', RULE],
+    [
+      402,
+      'insufficient_quota',
+      'The project has insufficient quota for this request.',
+      'insufficient_quota',
+      'The Wiro AI balance is too low. Add funds at wiro.ai/panel/billing.',
+    ],
+    [
+      401,
+      'authentication_error',
+      'The supplied API credentials are invalid.',
+      'invalid_api_key',
+      'Wiro AI did not accept the API key. Check WIRO_API_KEY, and WIRO_API_SECRET for signature projects.',
+    ],
+  ])('shows the right text for a %i %s refusal (%s)', async (status, type, message, code, shown) => {
+    const completions = gateway(() => jsonResponse({ error: { message, type, param: null, code } }, status));
+    const response = await POST(jsonRequest(CHAT, { model: 'openai/gpt-5-4-nano', messages: [userMessage('Hi')] }));
+    const events = await uiStreamEvents(response);
+    expect(events.find((event) => event.type === 'error')).toMatchObject({ errorText: shown });
+    // A refusal is not sent again.
+    expect(completions()).toHaveLength(1);
+  });
+
   it('says when the key is missing', async () => {
     vi.stubEnv('WIRO_API_KEY', '');
     gateway();

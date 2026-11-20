@@ -110,6 +110,7 @@ export async function uploadFile(file: File): Promise<string> {
 
 - Every project sends `x-api-key`. A Signature project also sends `x-nonce` and `x-signature`, made fresh for each request.
 - Check `result` in the body, not only the HTTP status. Error code `96` means too many tasks are running: nothing was started or charged, so retry after a few seconds. Code `97` means the balance is too low, and the user adds funds at https://wiro.ai/panel/billing.
+- Code `92` means a Model Access rule blocks the model, and code `93` that a spend limit has no room for the run. Nothing was started or charged, and the message names the rule or the limit (and when the limit resets), so show it as it is. Do not retry, and do not switch models or tell the user to add funds: only the account owner, a team admin or the organization owner can change the rule or raise the limit, at https://wiro.ai/panel/controls/model-access or https://wiro.ai/panel/controls/spend-limits.
 
 ## 2. Find a model and show its price
 
@@ -473,6 +474,7 @@ export function Chat() {
 - `@wiro-ai/wiro-llm` is the Wiro AI provider for the AI SDK (`npm i @wiro-ai/wiro-llm ai @ai-sdk/react`). The gateway also works with the OpenAI SDK and `baseURL: 'https://llm.wiro.ai/v1'`.
 - Pick ids from `GET https://llm.wiro.ai/v1/models`, which needs no key. Check `capabilities.endpoints` and `supported_parameters` before you rely on a feature such as tools or reasoning settings.
 - The billed amount of each step is in `providerMetadata.wiro.cost`.
+- A spend limit or a Model Access rule refuses a chat before the stream starts: the gateway answers 402 `spend_limit_reached` or 403 `model_not_allowed` with Wiro's own message, which names the limit or the rule. In `toUIMessageStreamResponse`'s `onError`, read the code from the `APICallError` (`error.data.error.code`) and show that message; keep a balance text for 402 `insufficient_quota` and a key text for 401.
 
 ## 7. In Wiro-Next-Starter
 

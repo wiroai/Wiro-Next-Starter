@@ -29,7 +29,39 @@ function text(message: string, status: number) {
   return new Response(message, { status, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
 }
 
+type GatewayErrorBody = { code?: unknown; message?: unknown };
+
+/** The gateway's `{ code, message }` for a failed call, or for an error frame inside a stream. */
+function gatewayError(error: unknown): { code?: string; message?: string } {
+  let body: GatewayErrorBody | undefined;
+  if (APICallError.isInstance(error)) {
+    body = (error.data as { error?: GatewayErrorBody } | undefined)?.error;
+    if (!body && error.responseBody) {
+      try {
+        body = (JSON.parse(error.responseBody) as { error?: GatewayErrorBody } | null)?.error;
+      } catch {
+        // Not a JSON body.
+      }
+    }
+  } else if (error && typeof error === 'object' && 'code' in error) {
+    body = error as GatewayErrorBody;
+  }
+  return {
+    code: typeof body?.code === 'string' ? body.code : undefined,
+    message: typeof body?.message === 'string' && body.message.trim() ? body.message.trim() : undefined,
+  };
+}
+
 function streamErrorMessage(error: unknown): string {
+  const { code, message } = gatewayError(error);
+  // A spend limit or a Model Access rule of the key's workspace stopped the call before it ran. Wiro's
+  // message names the limit (and when it resets) or the rule. More funds or another key change nothing.
+  if (code === 'spend_limit_reached') {
+    return message ?? 'A spend limit of this Wiro AI workspace is reached.';
+  }
+  if (code === 'model_not_allowed') {
+    return message ?? 'A Model Access rule of this Wiro AI workspace blocks this model.';
+  }
   if (APICallError.isInstance(error)) {
     if (error.statusCode === 401 || error.statusCode === 403) {
       return 'Wiro AI did not accept the API key. Check WIRO_API_KEY, and WIRO_API_SECRET for signature projects.';

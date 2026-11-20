@@ -58,7 +58,7 @@ Railway builds the app with Railpack, which reads `package.json`: it runs `npm r
 
 Anyone who can open a deployment can run models with its key. For a demo that strangers can try:
 
-1. In your Wiro AI dashboard, create a team for the demo, move a small amount to its wallet and set a team spend limit. You can also limit the models the team can run. See [Team billing](https://wiro.ai/docs/organizations-billing).
+1. In your Wiro AI dashboard, create a team for the demo, move a small amount to its wallet and set a team spend limit. You can also limit the models the team can run. See [Team billing](https://wiro.ai/docs/organizations-billing), [Spend Limits](https://wiro.ai/docs/spend-limits) and [Model Access](https://wiro.ai/docs/model-access). When a limit or a rule stops a run or a chat, the app shows Wiro's message, which names it.
 2. Create a project in that team and use its API key as `WIRO_API_KEY`.
 3. Set `MAX_RUN_PRICE`, for example to `0.10`, so no single run costs more.
 4. Leave `BASIC_AUTH_PASSWORD` empty so visitors can open the app.

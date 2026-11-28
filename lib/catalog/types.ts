@@ -43,6 +43,8 @@ export type PriceRow = {
   note?: string;
   priceExtra?: number;
   priceInput?: number;
+  /** On a price per second of input audio or video: the most seconds each input counts. */
+  maxSeconds?: number;
 };
 
 export type PriceInfo = {

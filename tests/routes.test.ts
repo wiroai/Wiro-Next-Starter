@@ -26,9 +26,9 @@ const seedance = toolItem({
   title: 'Seedance V1 Pro Fast',
   categories: ['text-to-video', 'image-to-video'],
   dynamicprice: [
-    { inputs: { duration: '5', resolution: '480p' }, price: 0.05, priceMethod: 'cpr' },
-    { inputs: { duration: '10', resolution: '480p' }, price: 0.1, priceMethod: 'cpr' },
-    { inputs: { duration: '5', resolution: '1080p' }, price: 0.24, priceMethod: 'cpr' },
+    { inputs: { duration: '5', resolution: '480p' }, price: 0.05, priceMethod: 'per-run' },
+    { inputs: { duration: '10', resolution: '480p' }, price: 0.1, priceMethod: 'per-run' },
+    { inputs: { duration: '5', resolution: '1080p' }, price: 0.24, priceMethod: 'per-run' },
   ],
   parameters: [
     {

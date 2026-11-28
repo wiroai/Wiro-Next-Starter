@@ -8,7 +8,7 @@ import type { TaskView } from './tasks';
 export type RunRequest = {
   model: string;
   values: FormValues;
-  /** Length of the input audio, for prices per audio second. */
+  /** Length of the input audio or video, for prices per second of input audio or video. */
   mediaSeconds?: number;
 };
 

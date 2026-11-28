@@ -11,7 +11,7 @@ const RunRequest = z.object({
     z.string().max(200),
     z.union([z.string().max(MAX_TEXT_LENGTH + 1), z.array(z.string().max(4096)).max(MAX_FILES + 1), z.boolean()]),
   ),
-  /** Length of the input audio, measured in the browser, for prices per audio second. */
+  /** Length of the input audio or video, measured in the browser, for prices per second of input audio or video. */
   mediaSeconds: z.number().positive().max(86_400).optional(),
 });
 

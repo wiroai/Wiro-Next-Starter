@@ -90,7 +90,7 @@ export function toolItem(overrides: Record<string, unknown> = {}): Record<string
     seodescription: 'Fast text to image.',
     categories: ['tool', 'text-to-image'],
     image: 'https://cdn.wiro.ai/uploads/models/p-image-cover.webp',
-    dynamicprice: '[{"inputs":{},"price":0.005,"priceMethod":"cpr"}]',
+    dynamicprice: '[{"inputs":{},"price":0.005,"priceMethod":"per-run"}]',
     cps: '0',
     approximatelycost: '0',
     taskstat: { runcount: '100', successcount: '100', elapsedseconds: '900' },

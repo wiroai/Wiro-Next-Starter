@@ -2,21 +2,24 @@
 import 'server-only';
 
 /** One row of a model's price list. `inputs` is empty when one price fits every setting. */
-export type PriceRow = { price: number; priceMethod: string; inputs?: Record<string, unknown> };
+export type PriceRow = { price: number; priceMethod: string; inputs?: Record<string, unknown>; note?: string };
 
 export type ModelSummary = { id: string; title: string; prices: PriceRow[] };
 
 type ToolItem = { cleanslugowner?: string; cleanslugproject?: string; title?: string; dynamicprice?: unknown };
 
+// What one `price` buys. per-realtime-turn and reported-price rows are charged by usage instead: their
+// `price` is a placeholder and their `note` gives the rates. Any other method bills per second of run time.
 const PER: Record<string, string> = {
-  cpr: 'per run',
-  cpo: 'per output',
-  cps: 'per second of run time',
-  cpt: 'per token',
-  'cp-pixel': 'per 1024x1024 tile',
-  'cp-promptlength': 'per prompt character',
-  'cp-audiosecondslength': 'per second of input audio',
-  'cp-outputVideoLength': 'per second of video',
+  'per-run': 'per run',
+  'per-run-second': 'per second of run time',
+  'per-output-file': 'per output file',
+  'per-total-token': 'per input and output token',
+  'per-output-megapixel': 'per output megapixel',
+  'per-input-character': 'per prompt character',
+  'per-input-audio-second': 'per second of input audio',
+  'per-input-video-second': 'per second of input video',
+  'per-output-video-second': 'per second of output video',
 };
 
 /** Tool/List and Tool/Detail are public: they need no key. */
@@ -69,5 +72,6 @@ export function priceFor(prices: PriceRow[], params: Record<string, unknown>): P
   );
 }
 
-/** "$0.005 per run", "$0.00008 per prompt character". */
-export const priceLabel = (row: PriceRow) => `$${row.price} ${PER[row.priceMethod] ?? row.priceMethod}`;
+/** "$0.005 per run", "$0.00008 per prompt character"; a price charged by usage shows its rates. */
+export const priceLabel = (row: PriceRow) =>
+  PER[row.priceMethod] ? `$${row.price} ${PER[row.priceMethod]}` : (row.note ?? 'set when the run ends');

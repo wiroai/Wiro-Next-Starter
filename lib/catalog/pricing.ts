@@ -7,10 +7,12 @@ import type { PriceInfo, PriceRow } from './types';
  * - The row: Wiro bills with the first row whose values all match the run's
  *   settings. When a row counts files (QUANTITY:n), it bills with the valid row
  *   that has the highest total count at or below what the run sends.
- * - The charge: cpr is per run, cpo per output, cp-promptlength per prompt
- *   character, cp-audiosecondslength per second of input audio,
- *   cp-outputVideoLength per second of output video, cp-pixel per 1024 x 1024
- *   block. A run that matches no row is billed for its run time.
+ * - The charge: per-run is per run, per-output-file per output file,
+ *   per-input-character per prompt character, per-input-audio-second and
+ *   per-input-video-second per second of input audio or video (each input at
+ *   most the row's maxSeconds), per-output-video-second per second of output
+ *   video, per-output-megapixel per 1024 x 1024 block. A run that matches no
+ *   row, or a row whose method Wiro does not bill by, is billed for its run time.
  */
 
 export type Quote = {
@@ -74,30 +76,32 @@ export function parsePriceRows(value: unknown): PriceRow[] {
         note: typeof record.note === 'string' && record.note.trim() ? record.note.trim() : undefined,
         priceExtra: positive(record.priceExtra),
         priceInput: positive(record.priceInput),
+        maxSeconds: positive(record.maxSeconds),
       },
     ];
   });
 }
 
 const UNITS: Record<string, string> = {
-  cpr: 'run',
-  cpo: 'output',
-  cps: 'second',
-  cpt: 'token',
-  'cp-promptlength': 'character',
-  'cp-audiosecondslength': 'audio second',
-  'cp-outputVideoLength': 'video second',
+  'per-run': 'run',
+  'per-output-file': 'output',
+  'per-run-second': 'second',
+  'per-total-token': 'token',
+  'per-input-character': 'character',
+  'per-input-audio-second': 'audio second',
+  'per-input-video-second': 'video second',
+  'per-output-video-second': 'video second',
 };
 
 export const isLivePricing = (info: PriceInfo): boolean =>
-  info.rows.some((row) => row.priceMethod === 'cp-realtimeturn');
+  info.rows.some((row) => row.priceMethod === 'per-realtime-turn');
 
 /** Short price text for model lists, and a number to sort by. */
 export function summaryPrice(info: PriceInfo): { label: string; sort: number } {
   const rows = info.rows;
   if (isLivePricing(info)) return { label: 'live, per turn', sort: Number.POSITIVE_INFINITY };
 
-  const fixed = rows.filter((row) => row.priceMethod === 'cpr' || row.priceMethod === 'cpo');
+  const fixed = rows.filter((row) => row.priceMethod === 'per-run' || row.priceMethod === 'per-output-file');
   if (fixed.length > 0) {
     const prices = [...new Set(fixed.map((row) => row.price))].sort((a, b) => a - b);
     const unit = UNITS[fixed[0].priceMethod];
@@ -105,17 +109,17 @@ export function summaryPrice(info: PriceInfo): { label: string; sort: number } {
     const label = prices.length === 1 ? `${formatUsd(prices[0])} / ${unit}` : `from ${formatUsd(prices[0])}`;
     return { label, sort: prices[0] };
   }
-  const pixel = rows.find((row) => row.priceMethod === 'cp-pixel');
+  const pixel = rows.find((row) => row.priceMethod === 'per-output-megapixel');
   if (pixel) return { label: `from ${formatUsd(pixel.price)} / image`, sort: pixel.price };
   const metered = rows.find((row) => UNITS[row.priceMethod] && row.price > 0);
   if (metered) {
     return { label: `${formatUsd(metered.price)} / ${UNITS[metered.priceMethod]}`, sort: metered.price };
   }
-  const readOutput = rows.find((row) => row.priceMethod === 'cp-readoutput');
-  if (readOutput) {
-    return readOutput.price > 0
-      ? { label: `about ${formatUsd(readOutput.price)}`, sort: readOutput.price }
-      : { label: 'set by the run', sort: Number.POSITIVE_INFINITY };
+  const reported = rows.find((row) => row.priceMethod === 'reported-price');
+  if (reported) {
+    return reported.price > 0
+      ? { label: `about ${formatUsd(reported.price)}`, sort: reported.price }
+      : { label: 'set when the run ends', sort: Number.POSITIVE_INFINITY };
   }
   if (info.estimate !== undefined) return { label: `about ${formatUsd(info.estimate)}`, sort: info.estimate };
   if (info.rate !== undefined) return { label: `${formatUsd(info.rate)} / second`, sort: Number.POSITIVE_INFINITY };
@@ -217,11 +221,11 @@ function rowQuote(row: PriceRow, params: Record<string, unknown>, context: Quote
   const price = row.price;
   const note = row.note;
   switch (row.priceMethod) {
-    case 'cpr':
+    case 'per-run':
       return price === 0
         ? { amount: 0, approximate: false, label: 'Free', note }
         : { amount: price, approximate: false, label: formatUsd(price), note: note ?? 'Per run.' };
-    case 'cpo': {
+    case 'per-output-file': {
       if (price === 0) return { amount: 0, approximate: false, label: 'Free', note };
       const count = firstNumber(params, COUNT_KEYS) ?? 1;
       const amount = price * count;
@@ -229,10 +233,10 @@ function rowQuote(row: PriceRow, params: Record<string, unknown>, context: Quote
         amount,
         approximate: false,
         label: formatUsd(amount),
-        note: note ?? (count > 1 ? `${formatUsd(price)} per output, ${count} outputs.` : 'Per output.'),
+        note: note ?? (count > 1 ? `${formatUsd(price)} per output file, ${count} output files.` : 'Per output file.'),
       };
     }
-    case 'cp-promptlength': {
+    case 'per-input-character': {
       const chars = context.promptChars ?? 0;
       if (chars === 0) return { approximate: true, label: `${formatUsd(price)} / character`, note };
       const amount = price * chars;
@@ -240,21 +244,13 @@ function rowQuote(row: PriceRow, params: Record<string, unknown>, context: Quote
         amount,
         approximate: false,
         label: formatUsd(amount),
-        note: note ?? `${chars.toLocaleString('en-US')} characters at ${formatUsd(price)} each.`,
+        note: note ?? `${chars.toLocaleString('en-US')} prompt characters at ${formatUsd(price)} each.`,
       };
     }
-    case 'cp-audiosecondslength': {
-      const length = context.mediaSeconds;
-      if (length === undefined) return { approximate: true, label: `${formatUsd(price)} / audio second`, note };
-      const amount = price * length;
-      return {
-        amount,
-        approximate: true,
-        label: `about ${formatUsd(amount)}`,
-        note: note ?? `${Math.round(length)} seconds of audio at ${formatUsd(price)} per second.`,
-      };
-    }
-    case 'cp-outputVideoLength': {
+    case 'per-input-audio-second':
+    case 'per-input-video-second':
+      return inputLengthQuote(row, context);
+    case 'per-output-video-second': {
       const length = firstNumber(params, DURATION_KEYS);
       if (length === undefined) return { approximate: true, label: `${formatUsd(price)} / video second`, note };
       const amount = price * length;
@@ -262,21 +258,21 @@ function rowQuote(row: PriceRow, params: Record<string, unknown>, context: Quote
         amount,
         approximate: false,
         label: formatUsd(amount),
-        note: note ?? `${length} seconds of video at ${formatUsd(price)} per second.`,
+        note: note ?? `${length} seconds of output video at ${formatUsd(price)} per second.`,
       };
     }
-    case 'cp-pixel':
+    case 'per-output-megapixel':
       return {
         amount: price,
         approximate: true,
         label: `from ${formatUsd(price)}`,
         note: note ?? `${formatUsd(price)} for an output image up to 1024 x 1024 pixels, more for larger ones.`,
       };
-    case 'cps':
+    case 'per-run-second':
       return { approximate: true, label: `${formatUsd(price)} / second`, note: note ?? 'Billed by run time.' };
-    case 'cpt':
-      return { approximate: true, label: 'by tokens', note: note ?? `${formatUsd(price)} per token.` };
-    case 'cp-readoutput':
+    case 'per-total-token':
+      return { approximate: true, label: 'by tokens', note: note ?? `${formatUsd(price)} per input and output token.` };
+    case 'reported-price':
       return price > 0
         ? {
             amount: price,
@@ -284,10 +280,31 @@ function rowQuote(row: PriceRow, params: Record<string, unknown>, context: Quote
             label: `about ${formatUsd(price)}`,
             note: note ?? 'Set when the run ends.',
           }
-        : { approximate: true, label: 'set by the run', note: note ?? 'Set when the run ends.' };
+        : { approximate: true, label: 'set when the run ends', note: note ?? 'Set when the run ends.' };
     default:
       return { approximate: true, label: 'by run time', note: 'Billed by run time.' };
   }
+}
+
+/**
+ * A price per second of input audio or video, for the length the browser
+ * measured. A row's maxSeconds caps each input: its runner keeps only that much
+ * of a longer one, so Wiro bills only that much.
+ */
+function inputLengthQuote(row: PriceRow, context: QuoteContext): Quote {
+  const media = row.priceMethod === 'per-input-video-second' ? 'video' : 'audio';
+  const cap = row.maxSeconds;
+  const length = context.mediaSeconds;
+  if (length === undefined) {
+    const most = cap === undefined ? undefined : `Each input counts at most ${cap} seconds.`;
+    return { approximate: true, label: `${formatUsd(row.price)} / ${media} second`, note: row.note ?? most };
+  }
+  const counted = cap === undefined ? length : Math.min(length, cap);
+  const amount = row.price * counted;
+  const said = row.note ?? `${Math.round(counted)} seconds of input ${media} at ${formatUsd(row.price)} per second.`;
+  const cut =
+    cap !== undefined && length > cap ? ` Only the first ${cap} seconds of each input are processed and billed.` : '';
+  return { amount, approximate: true, label: `about ${formatUsd(amount)}`, note: `${said}${cut}` };
 }
 
 /** The price of a run with these parameters (catalog values filled in, see `withDefaults`). */

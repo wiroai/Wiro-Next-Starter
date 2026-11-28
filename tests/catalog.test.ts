@@ -13,7 +13,7 @@ describe('listCategory', () => {
           toolItem({ cleanslugproject: 'p-image-uncensored', title: 'P-Image Uncensored' }),
           toolItem({
             cleanslugproject: 'voice-live',
-            dynamicprice: '[{"price":0.01,"priceMethod":"cp-realtimeturn"}]',
+            dynamicprice: '[{"price":0.01,"priceMethod":"per-realtime-turn"}]',
           }),
           toolItem({
             cleanslugowner: 'wiro',

@@ -119,21 +119,24 @@ export async function uploadFile(file: File): Promise<string> {
 import 'server-only';
 
 /** One row of a model's price list. `inputs` is empty when one price fits every setting. */
-export type PriceRow = { price: number; priceMethod: string; inputs?: Record<string, unknown> };
+export type PriceRow = { price: number; priceMethod: string; inputs?: Record<string, unknown>; note?: string };
 
 export type ModelSummary = { id: string; title: string; prices: PriceRow[] };
 
 type ToolItem = { cleanslugowner?: string; cleanslugproject?: string; title?: string; dynamicprice?: unknown };
 
+// What one `price` buys. per-realtime-turn and reported-price rows are charged by usage instead: their
+// `price` is a placeholder and their `note` gives the rates. Any other method bills per second of run time.
 const PER: Record<string, string> = {
-  cpr: 'per run',
-  cpo: 'per output',
-  cps: 'per second of run time',
-  cpt: 'per token',
-  'cp-pixel': 'per 1024x1024 tile',
-  'cp-promptlength': 'per prompt character',
-  'cp-audiosecondslength': 'per second of input audio',
-  'cp-outputVideoLength': 'per second of video',
+  'per-run': 'per run',
+  'per-run-second': 'per second of run time',
+  'per-output-file': 'per output file',
+  'per-total-token': 'per input and output token',
+  'per-output-megapixel': 'per output megapixel',
+  'per-input-character': 'per prompt character',
+  'per-input-audio-second': 'per second of input audio',
+  'per-input-video-second': 'per second of input video',
+  'per-output-video-second': 'per second of output video',
 };
 
 /** Tool/List and Tool/Detail are public: they need no key. */
@@ -186,14 +189,15 @@ export function priceFor(prices: PriceRow[], params: Record<string, unknown>): P
   );
 }
 
-/** "$0.005 per run", "$0.00008 per prompt character". */
-export const priceLabel = (row: PriceRow) => `$${row.price} ${PER[row.priceMethod] ?? row.priceMethod}`;
+/** "$0.005 per run", "$0.00008 per prompt character"; a price charged by usage shows its rates. */
+export const priceLabel = (row: PriceRow) =>
+  PER[row.priceMethod] ? `$${row.price} ${PER[row.priceMethod]}` : (row.note ?? 'set when the run ends');
 ```
 
 - `Tool/List` takes `search`, `categories` (such as `text-to-image`, `image-to-video`, `text-to-speech` or `speech-to-text`), `start` and `limit`. Run a model by `cleanslugowner/cleanslugproject`. People browse the same catalog at https://wiro.ai/models.
 - `Tool/Detail` lists the inputs in `tool[0].parameters[].items[]`: `id` (the field to send), `type`, `required`, `options` and the default `value`. Send every required input. Wiro fills in the optional inputs you leave out, except file and prompt fields.
-- `priceMethod` says what one `price` buys: `cpr` per run, `cpo` per output file, `cps` per second of run time, `cpt` per token, `cp-pixel` per 1024x1024 tile, `cp-promptlength` per prompt character, `cp-audiosecondslength` per second of input audio, `cp-outputVideoLength` per second of output video. A model without `dynamicprice` bills per second of run time.
-- Rows with a `QUANTITY` input price each output. `lib/catalog/pricing.ts` in Wiro-Next-Starter covers every method, prompt length and audio length included.
+- `priceMethod` says what one `price` buys: `per-run` per run, `per-output-file` per output file, `per-run-second` per second of run time, `per-total-token` per input and output token, `per-output-megapixel` the first started 1024x1024 tile of the first output (`priceExtra` each further tile, `priceInput` per tile of each input image, at most 4), `per-input-character` per prompt character, `per-input-audio-second` and `per-input-video-second` per second of every audio or video input (each at most the option's `maxSeconds` when it sets one), `per-output-video-second` per second of output video. `per-realtime-turn` and `reported-price` are charged by usage: `price` is a placeholder and `note` gives the rates. A model without `dynamicprice`, or an option with any other method, bills per second of run time.
+- Rows with a `QUANTITY` input price each output. `lib/catalog/pricing.ts` in Wiro-Next-Starter covers every method, prompt length and the length of input audio and video included.
 - The catalog changes slowly, so cache it for a few minutes.
 
 ## 3. Start a run and follow it

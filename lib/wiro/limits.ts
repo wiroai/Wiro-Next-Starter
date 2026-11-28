@@ -14,5 +14,5 @@ export function maxUploadBytes(): number {
   return (Number.isFinite(megabytes) && megabytes > 0 ? megabytes : 25) * 1024 * 1024;
 }
 
-/** Audio length assumed for the price limit when the browser sent none. */
+/** Audio or video length assumed for the price limit when the browser sent none. */
 export const ASSUMED_MEDIA_SECONDS = 300;

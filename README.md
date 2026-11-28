@@ -118,16 +118,16 @@ POST /api/chat                ->  streamText(wiro(model))             ->   llm.w
 
 The code behind them:
 
-| File                     | What it does                                                                                                                                             |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lib/catalog/schema.ts`  | Reads a model's inputs and turns form values into Run parameters: file inputs and their URL fields, checkboxes, ranges and defaults. Runs on both sides. |
-| `lib/catalog/pricing.ts` | Prices a run from the model's price list the way Wiro AI bills it: per run, per output, per character, per second of audio or video, or by run time.     |
-| `lib/catalog/tools.ts`   | The tools of the Image, Video and Audio pages with their categories and default models, and the Playground's categories.                                 |
-| `lib/catalog/filters.ts` | Models the app never lists: uncensored and NSFW models, and live voice models that need a realtime connection.                                           |
-| `lib/wiro/`              | Server only: the Run API client with request signing, the catalog cache, the gateway model list and the limits.                                          |
-| `lib/use-task-run.ts`    | The React hook that starts a task and polls it.                                                                                                          |
-| `lib/history.ts`         | The History page's store in `localStorage`.                                                                                                              |
-| `proxy.ts`               | The optional password.                                                                                                                                   |
+| File                     | What it does                                                                                                                                                                               |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/catalog/schema.ts`  | Reads a model's inputs and turns form values into Run parameters: file inputs and their URL fields, checkboxes, ranges and defaults. Runs on both sides.                                   |
+| `lib/catalog/pricing.ts` | Prices a run from the model's price list the way Wiro AI bills it: per run, per output file, per prompt character, per second of input audio, input video or output video, or by run time. |
+| `lib/catalog/tools.ts`   | The tools of the Image, Video and Audio pages with their categories and default models, and the Playground's categories.                                                                   |
+| `lib/catalog/filters.ts` | Models the app never lists: uncensored and NSFW models, and live voice models that need a realtime connection.                                                                             |
+| `lib/wiro/`              | Server only: the Run API client with request signing, the catalog cache, the gateway model list and the limits.                                                                            |
+| `lib/use-task-run.ts`    | The React hook that starts a task and polls it.                                                                                                                                            |
+| `lib/history.ts`         | The History page's store in `localStorage`.                                                                                                                                                |
+| `proxy.ts`               | The optional password.                                                                                                                                                                     |
 
 A task is finished when its status is `task_postprocess_end`, with `pexit` `"0"` on success, or `task_cancel`; see [Tasks](https://wiro.ai/docs/tasks). The browser only ever gets the task token, never the numeric task ID. Projects that use signature authentication send `x-nonce` and `x-signature` with every Run API request, where the signature is HMAC-SHA256 of the API secret plus the nonce, keyed with the API key; see [Authentication](https://wiro.ai/docs/authentication).
 
